@@ -1,0 +1,5 @@
+/.venv
+.env
+ap.py
+user/migrations
+/__pycache__
