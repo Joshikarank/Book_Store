@@ -2,4 +2,7 @@
 .env
 ap.py
 user/migrations
+user/__pycache__
 /__pycache__
+core/__pycache__
+
