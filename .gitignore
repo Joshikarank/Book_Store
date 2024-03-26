@@ -3,6 +3,10 @@
 ap.py
 user/migrations
 user/__pycache__
+cart/__pycache__
+cart/migrations
+books/migrations
+books/__pycache__
 /__pycache__
 core/__pycache__
 
