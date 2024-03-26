@@ -8,7 +8,7 @@ from flask_jwt_extended import decode_token
 from core.utils import send_email
 from jwt import DecodeError as JWTDecodeError
 from settings import settings
-import jwt as JWT
+import jwt as JWT 
 from passlib.hash import pbkdf2_sha256  # Import hash function
 
 
@@ -118,14 +118,14 @@ class Login(Resource):
 
 @api.route('/reset')
 class ResetPassword(Resource):
-    def post(self):
-        data = request.json
-        user = User.query.filter_by(email=data['email']).first()
-        if user:
-            token = user.token(aud='reset')
-            send_email(user.username, user.email, token)  # You need to define send_email
-            return {'message': 'Reset link sent to your email'}, 200
-        return {'message': 'User not found'}, 404
+    # def post(self):
+    #     data = request.json
+    #     user = User.query.filter_by(email=data['email']).first()
+    #     if user:
+    #         token = user.token(aud='reset')
+    #         send_email(user.username, user.email, token)  # You need to define send_email
+    #         return {'message': 'Reset link sent to your email'}, 200
+    #     return {'message': 'User not found'}, 404
 
     def put(self):
         data = request.json
@@ -142,3 +142,17 @@ class ResetPassword(Resource):
             db.session.commit()
             return {'message': 'Password reset successful'}, 200
         return {'message': 'Invalid token'}, 400
+    
+
+@api.route('/forgot')
+class ForgetPassword(Resource):
+    
+    @api.expect(api.model('forget',{"email":fields.String()}))
+    def post(self):
+        data = request.json
+        user = User.query.filter_by(email=data['email']).first()
+        if user:
+            token = user.token(aud='reset')
+            send_email(user.username, user.email, token)  # You need to define send_email
+            return {'message': 'Reset link sent to your email'}, 200
+        return {'message': 'User not found'}, 404
