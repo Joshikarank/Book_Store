@@ -76,10 +76,10 @@ class Login(Resource):
         try:
             data = request.json
             user = User.query.filter_by(username=data['username']).first()
-            token=user.token(aud='login')
-            if user and user.verify_password(data['password']):
-                token=user.token(aud='tologin',exp=60)
-                return {"message":"login successful","status":200,'token':token},200 
+            token = user.token(aud='login')
+            if user and user.verify_password(data['password']) and token is not None:
+                token = user.token(aud='tologin', exp=60)
+                return {"message": "login successful", "status": 200, 'token': token}, 200
             return {"message": "Invalid username or password"}, 401
         except Exception as e:
             return {"message": str(e)}, 500

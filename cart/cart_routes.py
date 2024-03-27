@@ -73,4 +73,60 @@ class DeletingCart(Resource):
         except Exception as e:
             return {"message":str(e),"status":500},500
 
+@api.route('/order')
+class ordercart(Resource):
+    method_decorators=[authorize_users]
+    
+    def post(self,*args,**kwargs):
+        try:
+            userid=g.user['id']
+            cart=Cart.query.filter_by(userid=userid).first()
+            if not cart:
+                return {"message":"cart not found","status":404},404
+            items=cart.items
+            cart_data={}
+            headers={'Content-Type': 'application/json'}
+            for item in items:
+                cart_data[item.bookid]=item.cart_item_quantity
+            validate_response=http.post(f'http://127.0.0.1:5000/validatebooks',
+                                        json=cart_data,headers=headers)
+            if validate_response.status_code>=400:
+                return {"message":"Unable to validate books","status":400},400
+            order_response=http.patch(f'http://127.0.0.1:5000/updatebooks',
+                                      json=cart_data,headers=headers)
+            if order_response.status_code>=400:
+                return {"message":"Unable to update books","status":400},400
+            cart.is_ordered=True
+            db.session.commit()
+            return {"message":"cart ordered successfully","status":200},200
+        except JWTDecodeError as e:
+            return {"message":str(e),"status":400}
+        except Exception as e:
+            return {"message":str(e),"status":500}
+            
 
+@api.route('/cancelorder')
+class Cancelordercart(Resource):
+    method_decorators=[authorize_users]
+    def delete(self,*args,**kwargs):
+        try:
+            userid=g.user['id']
+            id=request.args.get('id')
+            cart=Cart.query.filter_by(userid=userid).first()
+            if not cart:
+                return {"message":"cart not found","status":404},404
+            items=cart.items
+            cart_data={}
+            headers={'Content-Type': 'application/json'}
+            for item in items:
+                cart_data[item.bookid]=-1*item.cart_item_quantity
+            order_response=http.patch(f'http://127.0.0.1:5000/updatebooks',
+                                      json=cart_data,headers=headers)
+            for items in cart.items:
+                db.session.delete(item)
+                db.session.commit()
+            db.session.delete(cart)
+            db.session.commit()
+            return {"message":"Order cancelled successfully","status":204},204
+        except Exception as e:
+            return {"message":str(e),"status":500},500

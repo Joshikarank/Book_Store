@@ -22,7 +22,7 @@ class AddingBookApi(Resource):
             if not g.user['is_superuser']:
                 return {"message": "Access denied! You cannot perform this operation", "status": 403}, 403
             data = request.json
-            data['id']=g.user['id']
+            data['user_id']=g.user['id']
             serializer=BookValidator(**data)
             data=serializer.model_dump()
             book=Book(**data)
@@ -74,39 +74,8 @@ class DeletingBookApi(Resource):
        
 
    
-@api.route('/updatebook')
-class UpdatingbookApi(Resource):
-    method_decorators=[authorize_user]
-    @api.doc(headers={"Authorization":"token for updating books"},body=api.model('updating book',{"title":fields.String(),"author":fields.String(),"price":fields.Integer(),"quantity":fields.Integer()}))
-    def put(self, *args, **kwargs):
-        try:
-            if not g.user['is_superuser']:
-                return {"message": "Access denied! You cannot perform this operation", "status": 403}, 403
-            data = request.json
-            book_title = data.get('title')
-            if not book_title:
-                return {"message": "Book title is required to perform this operation", "status": 400}, 400
-            book = Book.query.filter_by(title=book_title).first()
-            if not book:
-                return {"message": "Book not found", "status": 404}, 404
-            [setattr(book, key, data.get(key, getattr(book, key))) for key in ['author', 'price', 'quantity']]
-            db.session.commit()
-            return {"message": "Book updated successfully", "status": 200}, 200
-        except Exception as e:
-            return {"message": str(e), "status": 500}, 500
+
        
-# @api.route('/getBook')
-# class getBookbyId(Resource):
-#     @api.expect(api.model('getting book by id',{'id':fields.Integer()}))
-#     def get(self,*args,**kwargs):
-#         try:
-           
-#             book=Book.query.filter_by('id')
-#             if not book:
-#                 return {"message":"Book not found","status":400},400
-#             return {"message":"Book fetched successfully","data":book.to_json,"status":200},200
-#         except Exception as e:
-#             return {"message":str(e),"status":400},400
 
 @app.route('/getBook',methods=['GET'])
 def get_book():
@@ -117,3 +86,31 @@ def get_book():
     if not book:
         return {"message":"Invalid token","status":400},400
     return {"message":"User_id fetched successfully","data":book.to_json,'status':200},200
+
+
+@app.post('/validatebooks')
+def validate_books(*args,**kwargs):
+    try:
+        data=request.json
+        for id,quantity in data.items():
+            book=Book.query.filter_by(book_id=id).first()
+            if not book:
+                return {"message":"Book is not found","status":404},404
+            if book.quantity<quantity:
+                return {"message":"Insufficient quantity","status":400},400
+            return {"message":"All items are ready to order","status":200},200
+    except Exception as e:
+        return {"message":str(e),"status":500}
+
+
+@app.patch('/updatebooks')
+def update_books(*args,**kwargs):
+    try:
+        data=request.json
+        for id,quantity in data.items():
+            book=Book.query.filter_by(book_id=id).first()
+            book.quantity-=quantity
+        db.session.commit()
+        return {"message":"Book quantity updated successfully","status":200},200
+    except Exception as e:
+        return {"message":str(e),"status":500},500
