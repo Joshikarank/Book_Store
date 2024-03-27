@@ -112,7 +112,7 @@ class Cancelordercart(Resource):
         try:
             userid=g.user['id']
             id=request.args.get('id')
-            cart=Cart.query.filter_by(userid=userid).first()
+            cart=Cart.query.filter_by(userid=userid, is_ordered=True,cart_id=id).first()
             if not cart:
                 return {"message":"cart not found","status":404},404
             items=cart.items
@@ -122,6 +122,8 @@ class Cancelordercart(Resource):
                 cart_data[item.bookid]=-1*item.cart_item_quantity
             order_response=http.patch(f'http://127.0.0.1:5000/updatebooks',
                                       json=cart_data,headers=headers)
+            if order_response.status_code>=400:
+                return {"message":"Unable to update books","status":400},400
             for items in cart.items:
                 db.session.delete(item)
                 db.session.commit()
