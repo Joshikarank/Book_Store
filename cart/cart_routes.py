@@ -51,3 +51,26 @@ class CartApi(Resource):
             return {"message":str(e),"status":409},409
         except Exception as e:
             return {"message":str(e),"status":500},500
+
+
+
+@api.route('/deletecart')
+class DeletingCart(Resource):
+    method_decorators = [authorize_users]
+
+    def delete(self, *args, **kwargs):
+        try:
+            data=request.json
+            cartid=data.get('cart_id')
+            cart=Cart.query.filter_by(cart_id=cartid).first()
+            cart_item=CartItems.query.filter_by(cartid=cartid).first()
+            if not cart:
+                return {"message":"cart not found","status":400},400
+            db.session.delete(cart_item)
+            db.session.delete(cart)
+            db.session.commit()
+            return {"message":"cart deleted successfully","status":204},204
+        except Exception as e:
+            return {"message":str(e),"status":500},500
+
+
