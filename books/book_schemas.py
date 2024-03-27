@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class BookValidator(BaseModel):
-    book_id: int
+    # book_id: int
     title: str
     author: str
     price: float

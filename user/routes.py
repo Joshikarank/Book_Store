@@ -84,49 +84,9 @@ class Login(Resource):
         except Exception as e:
             return {"message": str(e)}, 500
         
-    # def post(self):
-    #     data = request.json
-    #     user = User.query.filter_by(username=data['username']).first()
-    #     if user and user.password == data['password']:
-    #         return {'message': 'Login successful'}, 200
-    #     return {'message': 'Invalid credentials'}, 400
-
-
-
-
-
-# @api.route('/reset')
-# class ResetPassword(Resource):
-#     def post(self):
-#         data = request.json
-#         user = User.query.filter_by(email=data['email']).first()
-#         if user:
-#             token = user.token(aud='reset')
-#             send_email(user.username, user.email, token)
-#             return {'message': 'Reset link sent to your email'}, 200
-#         return {'message': 'User not found'}, 404
-#     def put(self):
-#         data = request.json
-#         token = data['token']
-#         payload = decode_token(token)
-#         user = User.query.filter_by(id=payload['sub']).first()
-#         if user:
-#             user.password = data['password']
-#             db.session.commit()
-#             return {'message': 'Password reset successful'}, 200
-#         return {'message': 'Invalid token'}, 400
 
 @api.route('/reset')
 class ResetPassword(Resource):
-    # def post(self):
-    #     data = request.json
-    #     user = User.query.filter_by(email=data['email']).first()
-    #     if user:
-    #         token = user.token(aud='reset')
-    #         send_email(user.username, user.email, token)  # You need to define send_email
-    #         return {'message': 'Reset link sent to your email'}, 200
-    #     return {'message': 'User not found'}, 404
-
     def put(self):
         data = request.json
         token = request.args.get('token')  # Get token from query parameters
@@ -146,7 +106,6 @@ class ResetPassword(Resource):
 
 @api.route('/forgot')
 class ForgetPassword(Resource):
-    
     @api.expect(api.model('forget',{"email":fields.String()}))
     def post(self):
         data = request.json
@@ -156,3 +115,14 @@ class ForgetPassword(Resource):
             send_email(user.username, user.email, token)  # You need to define send_email
             return {'message': 'Reset link sent to your email'}, 200
         return {'message': 'User not found'}, 404
+    
+
+@app.route('/getUser',methods=["GET"])
+def get():
+        id=request.args.get("id")
+        if not id:
+            return {"message":"User not found","status":400},400
+        user=User.query.get(id)
+        if not user:
+            return {"message":"Invalid User","status":400},400
+        return {"message":"User data fetched successfully","status":200, 'data': user.to_json},200

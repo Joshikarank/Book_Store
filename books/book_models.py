@@ -19,5 +19,4 @@ class Book(db.Model):
             'author': self.author,
             'price': self.price,
             'quantity': self.quantity,
-            'userid': self.userid
         }

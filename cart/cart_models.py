@@ -9,7 +9,7 @@ class Cart(db.Model):
     is_ordered=db.Column(db.Boolean,default=False)
     ordered_at=db.Column(db.DateTime,nullable=True)
     userid=db.Column(db.Integer, nullable=False)
-    Items=db.relationship('cartItems',back_populates='cart',lazy=True)
+    Items=db.relationship('cartItems',back_populates='carts',lazy=True)
     
     @property
     def to_json(self):
