@@ -1,49 +1,53 @@
 from flask import request
 from flask_restx import Api, Resource
 from cart.cart_models import Cart, CartItems
-from cart.utils import authorize_user
+from cart.utils import authorize_users
 from flask import g
 from cart import app, db
-import requests
+import requests as http
+from cart.cart_schemas import Cart_validator
+from jwt import DecodeError as JWTDecodeError
+
 
 api = Api(app=app, title='Book Api', security='apiKey', doc="/docs")
 
+
 @api.route('/addcarts')
 class CartApi(Resource):
-    method_decorators = [authorize_user]
+    method_decorators = [authorize_users]
 
     def post(self):
         try:
-            data = request.json
-            print(data)
-            app.logger.info(f"Received data: {data}")  # Add logging for debugging
-            if not data or 'book_id' not in data or 'quantity' not in data:
-                return {"message": "Invalid request data", "status": 400}, 400
-            book_id = data['book_id']
-            quantity = data['quantity']
-
-            response = requests.get(f'http://127.0.0.1:8000/getBook?book_id={book_id}')
+            serializer=Cart_validator(**request.json)
+            data=serializer.model_dump()
+            bookid=data['bookid']
+            response=http.get(f'http://127.0.0.1:5000/getBook?book_id={bookid}')
             if response.status_code >= 400:
-                return {"message": "Failed to fetch book data", "status": 400}, 400
-
-            book = response.json()
-            userid = g.user['id']
-
-            cart = Cart.query.filter_by(userid=userid, is_ordered=False).first()
+                return {"message": response.json()['message']}
+            book_data=response.json()
+            userid=g.user['id']
+            cart=Cart.query.filter_by(userid=userid,is_ordered=False).first()
             if not cart:
-                cart = Cart(userid=userid)
+                cart=Cart(userid=userid)
                 db.session.add(cart)
-
-            cart_item = CartItems.query.filter_by(cart_id=cart.cart_id, book_id=book_id).first()
+                db.session.commit()
+            price=book_data.get('price',0)
+            cart_item = CartItems.query.filter_by(bookid=bookid,cart_item_id=cart.cart_id).first()
             if not cart_item:
-                cart_item = CartItems(cart_id=cart.cart_id, book_id=book_id, quantity=quantity, price=book['price'])
+                print(cart.cart_id)
+                cart_item=CartItems(bookid=bookid, 
+                                    cart_item_price=price, 
+                                    cart_item_quantity=data['cart_item_quantity'],
+                                    cartid=cart.cart_id)
                 db.session.add(cart_item)
-            else:
-                cart_item.quantity += quantity
-
+                db.session.commit()
+            cart_item.cart_item_quantity=data['cart_item_quantity']
+            cart_item.cart_item_price=book_data['data']['price']
+            cart.cart_price = sum([item.cart_item_price * item.cart_item_quantity for item in cart.items])
+            cart.cart_quantity = sum([item.cart_item_quantity for item in cart.items])
             db.session.commit()
-
-            return {"message": "Item added to cart", "status": 200}, 200
-
+            return {"message":"Cart created successfully","data":cart.to_json,"status":200},200
+        except JWTDecodeError as e:
+            return {"message":str(e),"status":409},409
         except Exception as e:
-            return {"message": "Internal Server Error", "status": 500}, 500
+            return {"message":str(e),"status":500},500

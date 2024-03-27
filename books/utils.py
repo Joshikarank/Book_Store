@@ -20,8 +20,8 @@ def authorize_user(function):
                 return {'message': 'Token not found','status': 404}, 404
             payload = decode_token(token)
             response = http.get(f'http://127.0.0.1:7000/getUser?id={payload.get("sub")}')
-            # if response.status_code >= 400:
-            #     return {"message":"Something went wrong","status":401}, 401
+            if response.status_code >= 400:
+                return {"message":"cant fetch data of books","status":401}, 401
             user = response.json()['data']
             g.user = user
             if request.method in ['POST', 'PUT','PATCH']:
@@ -29,9 +29,9 @@ def authorize_user(function):
             else:
                 kwargs.update(id=user['id'])
         except JWTDecodeError:
-            return {'msg': 'Invalid Token','status': 401}, 401
+            return {'msg books': 'Invalid Token','status': 401}, 401
         except Exception as e:
-            return {'msg' : str(e), 'status' :500}
+            return {'msg books' : str(e), 'status' :500}
         return function(*args, **kwargs)
     wrapper.__name__ == function.__name__
                 

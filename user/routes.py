@@ -64,7 +64,7 @@ class VerifyUser(Resource):
             app.logger.exception(exc_info=False)
             return {"message":"Unable to decode token","status": 400}, 400
         except Exception:
-            return {"message":"Something went wrong","status": 400}, 400
+            return {"message":"cant fetch data of user","status": 400}, 400
         except:
             return {'message': 'Invalid or expired token'}, 400
         
@@ -119,10 +119,10 @@ class ForgetPassword(Resource):
 
 @app.route('/getUser',methods=["GET"])
 def get():
-        id=request.args.get("id")
+        user_id=request.args.get("user_id")
         if not id:
             return {"message":"User not found","status":400},400
-        user=User.query.get(id)
+        user=User.query.get(user_id)
         if not user:
             return {"message":"Invalid User","status":400},400
         return {"message":"User data fetched successfully","status":200, 'data': user.to_json},200

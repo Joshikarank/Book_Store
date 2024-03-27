@@ -9,7 +9,7 @@ class Cart(db.Model):
     is_ordered=db.Column(db.Boolean,default=False)
     ordered_at=db.Column(db.DateTime,nullable=True)
     userid=db.Column(db.Integer, nullable=False)
-    Items=db.relationship('cartItems',back_populates='carts',lazy=True)
+    items = db.relationship('CartItems', back_populates='cart_items')  # Use relationship with backref
     
     @property
     def to_json(self):
@@ -29,6 +29,7 @@ class CartItems(db.Model):
         cart_item_quantity=db.Column(db.Integer, nullable=False,default=0)
         bookid=db.Column(db.Integer, nullable=False)
         cartid=db.Column(db.Integer,db.ForeignKey('carts.cart_id',ondelete="CASCADE"),nullable=False)
+        cart_items = db.relationship('Cart', back_populates='items')  
 
         @property
         def to_json(self):

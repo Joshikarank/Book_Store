@@ -95,25 +95,25 @@ class UpdatingbookApi(Resource):
         except Exception as e:
             return {"message": str(e), "status": 500}, 500
        
-@api.route('/getBook')
-class getBookbyId(Resource):
-    @api.expect(api.model('getting book by id',{'id':fields.Integer()}))
-    def get(self,*args,**kwargs):
-        try:
+# @api.route('/getBook')
+# class getBookbyId(Resource):
+#     @api.expect(api.model('getting book by id',{'id':fields.Integer()}))
+#     def get(self,*args,**kwargs):
+#         try:
            
-            book=Book.query.filter_by('id')
-            if not book:
-                return {"message":"Book not found","status":400},400
-            return {"message":"Book fetched successfully","data":book.to_json,"status":200},200
-        except Exception as e:
-            return {"message":str(e),"status":400},400
+#             book=Book.query.filter_by('id')
+#             if not book:
+#                 return {"message":"Book not found","status":400},400
+#             return {"message":"Book fetched successfully","data":book.to_json,"status":200},200
+#         except Exception as e:
+#             return {"message":str(e),"status":400},400
 
-@app.route('/getbook',methods=['GET'])
+@app.route('/getBook',methods=['GET'])
 def get_book():
     bookid=request.args.get("book_id")
     if not bookid:
         return {"message":"Book not found","status":400},400
-    book=Book.query.get(id)
+    book=Book.query.get(bookid)
     if not book:
         return {"message":"Invalid token","status":400},400
     return {"message":"User_id fetched successfully","data":book.to_json,'status':200},200
