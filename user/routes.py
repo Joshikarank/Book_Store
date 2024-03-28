@@ -28,8 +28,7 @@ api=Api(app=app, title='Book Store Api',security='apiKey',
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["200 per day , 50 per hour"],
-    storage_uri="redis://127.0.0.1:6379/1",
+    default_limits=["200 per day , 50 per hour"]
 )
 
 
