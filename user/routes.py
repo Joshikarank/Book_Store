@@ -34,8 +34,8 @@ limiter = Limiter(
 
 @api.route('/users')
 class UserAPI(Resource):
-    @limiter.limit("20 per second")
-    @api.expect(api.model('signingin',{'username':fields.String(),'email':fields.String(),'password':fields.String(),'superkey':fields.String(required=False)}))
+    # @limiter.limit("20 per second")
+    # @api.expect(api.model('signingin',{'username':fields.String,'email':fields.String,'password':fields.String,'superkey':fields.String}))
     def post(self):
         """Create a new user"""
         try:

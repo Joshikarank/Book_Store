@@ -14,11 +14,10 @@ from user.routes import UserAPI, UserdeleteAPI , VerifyUser , Login, ResetPasswo
 
 @pytest.fixture
 def user_app():
-    app = create_app()
-    user_db.init_app('datab_users' , 'test')
+    app = create_app('datab_users' , 'test')
+    user_db.init_app(app)
     with app.app_context():
         user_db.create_all()
-        
     api = Api(app)
     api.add_resource(UserAPI, '/users')
     api.add_resource(UserdeleteAPI, '/delete')
