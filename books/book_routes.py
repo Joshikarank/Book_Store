@@ -9,13 +9,23 @@ from books.utils import authorize_user
 
 from flask import request
 
+from user.routes import limiter
 
+api=Api(app=app, title='Book Api', security='apiKey',
+        authorizations={
+            'apiKey':{
+                'type':'apiKey',
+                'in':'header',
+                'required':True,
+                'name':'Authorization'
+            }
+        }, doc="/docs")
 
-api=Api(app=app, title='Book Api',security='apiKey', doc="/docs")
 
 @api.route('/addbook')
 class AddingBookApi(Resource):
     method_decorators=[authorize_user]
+    @limiter.limit("20 per second")
     @api.doc(headers={"Authorization":"token for adding books"},body=api.model('adding book',{"title":fields.String(),"author":fields.String(),"price":fields.Integer(),"quantity":fields.Integer()}))
     def post(self):
         try:
@@ -37,7 +47,7 @@ class AddingBookApi(Resource):
     # @api.expect(api.model('retreiving book data',{'userid':fields.Integer()}))
 @api.route('/getbook')
 class RetreivingBookApi(Resource):
-
+    @limiter.limit("20 per second")
     @api.doc(headers={"Authorization":"token for retreiving book data"})
     def get(self,*args,**kwargs):
         try:
@@ -53,7 +63,7 @@ class RetreivingBookApi(Resource):
 @api.route('/deletebook')
 class DeletingBookApi(Resource):
     method_decorators=[authorize_user]
-   
+    @limiter.limit("20 per second")
     @api.doc(headers={"Authorization":"token for deleting books"},body=api.model('deleting book',{"title":fields.String()}))
     def delete(self, *args, **kwargs):
         try:

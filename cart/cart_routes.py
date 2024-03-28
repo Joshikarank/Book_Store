@@ -1,5 +1,5 @@
 from flask import request
-from flask_restx import Api, Resource
+from flask_restx import Api, Resource,fields
 from cart.cart_models import Cart, CartItems
 from cart.utils import authorize_users
 from flask import g
@@ -7,15 +7,24 @@ from cart import app, db
 import requests as http
 from cart.cart_schemas import Cart_validator
 from jwt import DecodeError as JWTDecodeError
+from user.routes import limiter
 
-
-api = Api(app=app, title='Book Api', security='apiKey', doc="/docs")
-
+api=Api(app=app,title='Cart Api',security='apiKey',
+        authorizations={
+            'apiKey':{
+                'type':'apiKey',
+                'in':'header',
+                'required':True,
+                'name':'Authorization'
+            }
+        }, doc="/docs")
 
 @api.route('/addcarts')
 class CartApi(Resource):
     method_decorators = [authorize_users]
-
+    @limiter.limit("20 per second")
+    @api.doc(headers={"Authorization":"token for adding cart"},
+                body=api.model("adding cart",{'bookid':fields.Integer(),'cart_item_quantity':fields.Integer()}))
     def post(self):
         try:
             serializer=Cart_validator(**request.json)
@@ -57,7 +66,9 @@ class CartApi(Resource):
 @api.route('/deletecart')
 class DeletingCart(Resource):
     method_decorators = [authorize_users]
-
+    @limiter.limit("20 per second")
+    @api.doc(headers={"Authorization":"token for deleting cart"},
+                body=api.model('Deleting cart',{'cart_id':fields.Integer()}))
     def delete(self, *args, **kwargs):
         try:
             data=request.json
@@ -76,7 +87,8 @@ class DeletingCart(Resource):
 @api.route('/order')
 class ordercart(Resource):
     method_decorators=[authorize_users]
-    
+    @limiter.limit("20 per second")
+    @api.doc(headers={"Authorization":"token for ordering cart"})
     def post(self,*args,**kwargs):
         try:
             userid=g.user['id']
@@ -108,6 +120,8 @@ class ordercart(Resource):
 @api.route('/cancelorder')
 class Cancelordercart(Resource):
     method_decorators=[authorize_users]
+    @limiter.limit("20 per second")
+    @api.doc(params={'id':'cart_id that should be cancelled'})
     def delete(self,*args,**kwargs):
         try:
             userid=g.user['id']

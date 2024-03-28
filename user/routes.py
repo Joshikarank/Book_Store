@@ -9,25 +9,34 @@ from core.utils import send_email
 from jwt import DecodeError as JWTDecodeError
 from settings import settings
 import jwt as JWT 
-from passlib.hash import pbkdf2_sha256  # Import hash function
+from passlib.hash import pbkdf2_sha256
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 
-api = Api(app, version='1.0', title='User API', description='CRUD operations for users')
 
-
-
-user_fields = api.model('User', {
-    'username': fields.String,
-    'password': fields.String,
-    'email': fields.String,
-    'superkey': fields.String
-})
+api=Api(app=app, title='Book Store Api',security='apiKey',
+        authorizations={
+            'apiKey':{
+                'type':'apiKey',
+                'in':'header',
+                'required':True,
+                'name':'Authorization'
+            }
+        }, 
+        doc="/docs")
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day , 50 per hour"],
+    storage_uri="redis://127.0.0.1:6379/1",
+)
 
 
 @api.route('/users')
 class UserAPI(Resource):
-    @api.expect(user_fields, validate=True)  
-    # @api.marshal_with(user_fields, code=201) 
+    @limiter.limit("20 per second")
+    @api.expect(api.model('signingin',{'username':fields.String(),'email':fields.String(),'password':fields.String(),'superkey':fields.String(required=False)}))
     def post(self):
         """Create a new user"""
         try:
@@ -45,9 +54,27 @@ class UserAPI(Resource):
         except ValidationError:
             return {'message': 'Validation Error on input data'}, 400
 
+@api.route('/delete')
+class UserdeleteAPI(Resource):
+    @limiter.limit("20 per second")
+    @api.expect(api.model('Deleting',{'username':fields.String(),'email':fields.String(),'password':fields.String()}))
+    def delete(self):
+        data=request.json
+        try:
+            serializer=RegisterSerializer(username=data['username'],password=data['password'],email=data['email'],superkey=data['superkey'])
+            user=User.query.filter_by(username=data['username']).first()
+            if user:
+                db.session.delete(user)
+                db.session.commit()
+                return {"message":"User deleted successfully","status":204},204
+            return {"message":"Username is incorrect","status":401},401
+        except Exception as e:
+            return {"message":str(e),"status":400},400
 
 @api.route('/verify')  # Define the verify endpoint
 class VerifyUser(Resource):
+    @limiter.limit("20 per second")
+    @api.expect(api.model('verifying',{'username':fields.String(),'email':fields.String(),'password':fields.String()}))
     def get(self):
         try:
             token = request.args.get('token')
@@ -71,6 +98,7 @@ class VerifyUser(Resource):
 
 @api.route('/login')
 class Login(Resource):
+    @limiter.limit("20 per second")
     def post(self):
 
         try:
@@ -87,6 +115,8 @@ class Login(Resource):
 
 @api.route('/reset')
 class ResetPassword(Resource):
+    @limiter.limit("20 per second")
+    @api.doc(params={"token":"token for reset password"},body=api.model('reset',{'new_password':fields.String()}))
     def put(self):
         data = request.json
         token = request.args.get('token')  # Get token from query parameters
@@ -106,6 +136,7 @@ class ResetPassword(Resource):
 
 @api.route('/forgot')
 class ForgetPassword(Resource):
+    @limiter.limit("20 per second")
     @api.expect(api.model('forget',{"email":fields.String()}))
     def post(self):
         data = request.json
