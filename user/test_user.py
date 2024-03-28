@@ -27,14 +27,40 @@ def wrong_super_user():
 }
     
 @pytest.fixture
-def existing_user():
+def already_existing_user():
     return {
     "username": "john_doe",
     "password" : "@Joshi2002",
-    "email": "johnnotdoe@example.com",
+    "email": "johndoe@example.com",
     "superkey": "12345"
 }
-    
+ 
+@pytest.fixture
+def invalid_username():
+    return {
+    "username": "jo",
+    "password" : "@Joshi2002",
+    "email": "jonhnotdoe@example.com",
+}
+ 
+@pytest.fixture
+def invalid_password():
+    return {
+    "username": "John_Doesnt",
+    "password" : "oshi",
+    "email": "jonhdoesnt@example.com",
+}
+ 
+@pytest.fixture
+def invalid_password():
+    return {
+    "username": "John_Doesnt",
+    "password" : "@Joshi2002",
+    "email": "jonhdoesntexample.com",
+}
+
+
+   
 @pytest.mark.register
 def test_register(user_client,super_user):
     response = user_client.post('/users',json=super_user, headers={"Content-Type":"application/json"})
@@ -52,7 +78,27 @@ def test_register_invalid_superuser(user_client,wrong_super_user):
     response = user_client.post('/users',json=wrong_super_user, headers={"Content-Type":"application/json"})
     assert response.status_code == 400
 
-@pytest.mark.existing_user_register
-def existing_user_register(user_client,existing_user):
-    response = user_client.post('/users',json=existing_user, headers={"Content-Type":"application/json"})
-    assert response.status_code == 201
+@pytest.mark.test_existing_user_register
+def test_existing_user_register(user_client,already_existing_user):
+    response = user_client.post('/users',json=already_existing_user, headers={"Content-Type":"application/json"})
+    print(response.json)
+    assert response.status_code == 400
+
+@pytest.mark.test_invalid_username_register
+def test_inavild_username_register(user_client,invalid_username):
+    response = user_client.post('/users',json=invalid_username, headers={"Content-Type":"application/json"})
+    print(response.json)
+    assert response.status_code == 400
+
+@pytest.mark.test_invalid_password_register
+def test_inavild_password_register(user_client,invalid_username):
+    response = user_client.post('/users',json=invalid_username, headers={"Content-Type":"application/json"})
+    print(response.json)
+    assert response.status_code == 400
+
+@pytest.mark.test_invalid_email_register
+def test_inavild_email_register(user_client,invalid_username):
+    response = user_client.post('/users',json=invalid_username, headers={"Content-Type":"application/json"})
+    print(response.json)
+    assert response.status_code == 400
+

@@ -24,3 +24,11 @@ class RegisterSerializer(BaseModel):
         if re.match(password_pattern,value):
             return value
         raise ValueError("password must contain one uppercase, one special character, one Number ")
+    
+    @field_validator('username')
+    @classmethod
+    def validate_username(cls,value):
+        username_pattern="[A-Za-z]{3,}"
+        if re.match(username_pattern,value):
+            return value
+        raise ValueError("username must contain minimum 3 letters and 1 caps")
