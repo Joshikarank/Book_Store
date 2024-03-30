@@ -54,7 +54,7 @@ class CartApi(Resource):
             cart.cart_price = sum([item.cart_item_price * item.cart_item_quantity for item in cart.items])
             cart.cart_quantity = sum([item.cart_item_quantity for item in cart.items])
             db.session.commit()
-            return {"message":"Cart created successfully","data":cart.to_json,"status":200},200
+            return {"message":"Cart created successfully","data":cart.to_json,"status":201},201
         except JWTDecodeError as e:
             return {"message":str(e),"status":409},409
         except Exception as e:

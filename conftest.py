@@ -56,8 +56,8 @@ def cart_app():
         cart_db.drop_all() 
         
 @pytest.fixture
-def user_client(user_app):
-    return user_app.test_client()
+def cart_client(cart_app):
+    return cart_app.test_client()
 
 
 
