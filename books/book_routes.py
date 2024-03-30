@@ -25,8 +25,8 @@ api=Api(app=app, title='Book Api', security='apiKey',
 @api.route('/addbook')
 class AddingBookApi(Resource):
     method_decorators=[authorize_user]
-    @limiter.limit("20 per second")
-    @api.doc(headers={"Authorization":"token for adding books"},body=api.model('adding book',{"title":fields.String(),"author":fields.String(),"price":fields.Integer(),"quantity":fields.Integer()}))
+    # @limiter.limit("20 per second")
+    # @api.doc(headers={"Authorization":"token for adding books"},body=api.model('adding book',{"title":fields.String(),"author":fields.String(),"price":fields.Integer(),"quantity":fields.Integer()}))
     def post(self):
         try:
             if not g.user['is_superuser']:
@@ -47,6 +47,7 @@ class AddingBookApi(Resource):
     # @api.expect(api.model('retreiving book data',{'userid':fields.Integer()}))
 @api.route('/getbook')
 class RetreivingBookApi(Resource):
+    method_decorators=[authorize_user]
     @limiter.limit("20 per second")
     @api.doc(headers={"Authorization":"token for retreiving book data"})
     def get(self,*args,**kwargs):
@@ -55,25 +56,24 @@ class RetreivingBookApi(Resource):
             if not books:
                 return {"message":"Book not found","status":400},400
             return {"msg":"retrieved successfully","data":[book.to_json for book in books]}
-           
-           
         except Exception as e:
             return {"message":str(e),"status":500},500
        
+
+
 @api.route('/deletebook')
 class DeletingBookApi(Resource):
     method_decorators=[authorize_user]
     @limiter.limit("20 per second")
-    @api.doc(headers={"Authorization":"token for deleting books"},body=api.model('deleting book',{"title":fields.String()}))
+    @api.doc(headers={"Authorization":"token for deleting books"})
     def delete(self, *args, **kwargs):
         try:
             if not g.user['is_superuser']:
                 return {"message": "Access denied! You cannot perform this operation", "status": 403}, 403
-            data = request.json
-            book_title = data.get('title')
-            if not book_title:
-                return {"message": "Book title is required to perform this operation", "status": 400}, 400
-            book = Book.query.filter_by(title=book_title).first()
+            book_id = request.args.get('book_id')
+            if not book_id:
+                return {"message": "Book ID is required to perform this operation", "status": 400}, 400
+            book = Book.query.get(book_id)
             if not book:
                 return {"message": "Book not found", "status": 404}, 404
             db.session.delete(book)
@@ -81,7 +81,7 @@ class DeletingBookApi(Resource):
             return {"message": "Book deleted successfully", "status": 204}, 204
         except Exception as e:
             return {"message": str(e), "status": 500}, 500
-       
+
 
    
 
@@ -113,14 +113,28 @@ def validate_books(*args,**kwargs):
         return {"message":str(e),"status":500}
 
 
-@app.patch('/updatebooks')
-def update_books(*args,**kwargs):
-    try:
-        data=request.json
-        for id,quantity in data.items():
-            book=Book.query.filter_by(book_id=id).first()
-            book.quantity-=quantity
-        db.session.commit()
-        return {"message":"Book quantity updated successfully","status":200},200
-    except Exception as e:
-        return {"message":str(e),"status":500},500
+
+
+@api.route('/updatebooks')
+class UpdatingbookApi(Resource):
+    method_decorators = [authorize_user]
+    
+    def put(self):
+        try:
+            book_id = request.args.get('book_id', type=int)
+            if book_id is None:
+                return {"message": "Book ID is required", "status": 400}, 400
+            if not g.user['is_superuser']:
+                return {"message": "Access denied! You cannot perform this operation", "status": 403}, 403
+            data = request.json
+            book = Book.query.get(book_id)
+            if not book:
+                return {"message": "Book not found", "status": 404}, 404
+            for key in ['title', 'author', 'price', 'quantity']:
+                if key in data:
+                    setattr(book, key, data[key])
+            db.session.commit()
+            return {"message": "Book updated successfully", "status": 200}, 200
+        except Exception as e:
+            return {"message": str(e), "status": 500}, 500
+

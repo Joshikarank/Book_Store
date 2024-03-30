@@ -43,7 +43,6 @@ class CartApi(Resource):
             price=book_data.get('price',0)
             cart_item = CartItems.query.filter_by(bookid=bookid,cart_item_id=cart.cart_id).first()
             if not cart_item:
-                print(cart.cart_id)
                 cart_item=CartItems(bookid=bookid, 
                                     cart_item_price=price, 
                                     cart_item_quantity=data['cart_item_quantity'],

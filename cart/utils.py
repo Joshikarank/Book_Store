@@ -12,9 +12,7 @@ def authorize_users(function):
             if not token:
                 return {'message': 'Token not found','status': 404}, 404
             payload = decode_token(token)
-            print(payload)
             response = http.get(f'http://127.0.0.1:7000/getUser?user_id={payload.get('sub')}')
-            print(response.json())
             if response.status_code >= 400:
                 return {"message":"cant fetch user data for cart","status":401}, 400
             user = response.json()['data']
