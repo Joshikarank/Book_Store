@@ -56,8 +56,10 @@ class CartApi(Resource):
             db.session.commit()
             return {"message":"Cart created successfully","data":cart.to_json,"status":201},201
         except JWTDecodeError as e:
+            app.logger.exception(e,exc_info=False)
             return {"message":str(e),"status":409},409
         except Exception as e:
+            app.logger.exception(e,exc_info=False)
             return {"message":str(e),"status":500},500
 
 
@@ -81,6 +83,7 @@ class DeletingCart(Resource):
             db.session.commit()
             return {"message":"cart deleted successfully","status":204},204
         except Exception as e:
+            app.logger.exception(e,exc_info=False)
             return {"message":str(e),"status":500},500
 
 @api.route('/order')
@@ -113,6 +116,7 @@ class ordercart(Resource):
         except JWTDecodeError as e:
             return {"message":str(e),"status":400}
         except Exception as e:
+            app.logger.exception(e,exc_info=False)
             return {"message":str(e),"status":500}
             
 
@@ -144,4 +148,5 @@ class Cancelordercart(Resource):
             db.session.commit()
             return {"message":"Order cancelled successfully","status":204},204
         except Exception as e:
+            app.logger.exception(e,exc_info=False)
             return {"message":str(e),"status":500},500

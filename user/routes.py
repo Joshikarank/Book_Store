@@ -12,7 +12,7 @@ import jwt as JWT
 from passlib.hash import pbkdf2_sha256
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-
+import logging
 
 
 api=Api(app=app, title='Book Store Api',security='apiKey',
@@ -68,6 +68,8 @@ class UserdeleteAPI(Resource):
                 return {"message":"User deleted successfully","status":204},204
             return {"message":"Username is incorrect","status":401},401
         except Exception as e:
+            app.logger.exception(e,exc_info=False)
+
             return {"message":str(e),"status":400},400
 
 @api.route('/verify')  # Define the verify endpoint
@@ -109,6 +111,7 @@ class Login(Resource):
                 return {"message": "login successful", "status": 200, 'token': token}, 200
             return {"message": "Invalid username or password"}, 401
         except Exception as e:
+            app.logger.exception(e,exc_info=False)
             return {"message": str(e)}, 500
         
 

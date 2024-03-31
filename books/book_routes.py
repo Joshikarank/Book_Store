@@ -25,7 +25,7 @@ api=Api(app=app, title='Book Api', security='apiKey',
 @api.route('/addbook')
 class AddingBookApi(Resource):
     method_decorators=[authorize_user]
-    # @limiter.limit("20 per second")
+    @limiter.limit("20 per second")
     # @api.doc(headers={"Authorization":"token for adding books"},body=api.model('adding book',{"title":fields.String(),"author":fields.String(),"price":fields.Integer(),"quantity":fields.Integer()}))
     def post(self):
         try:
@@ -42,6 +42,7 @@ class AddingBookApi(Resource):
         except JWTDecodeError:
             return {"message":"Invalid Token","status":401},401
         except Exception as e:
+            app.logger.exception(e,exc_info=False)
             return {"message":str(e),"status code":400},400
        
     # @api.expect(api.model('retreiving book data',{'userid':fields.Integer()}))
@@ -57,6 +58,7 @@ class RetreivingBookApi(Resource):
                 return {"message":"Book not found","status":400},400
             return {"msg":"retrieved successfully","data":[book.to_json for book in books]}
         except Exception as e:
+            app.logger.exception(e,exc_info=False)
             return {"message":str(e),"status":500},500
        
 
@@ -80,6 +82,7 @@ class DeletingBookApi(Resource):
             db.session.commit()
             return {"message": "Book deleted successfully", "status": 204}, 204
         except Exception as e:
+            app.logger.exception(e,exc_info=False)
             return {"message": str(e), "status": 500}, 500
 
 
@@ -110,6 +113,7 @@ def validate_books(*args,**kwargs):
                 return {"message":"Insufficient quantity","status":400},400
             return {"message":"All items are ready to order","status":200},200
     except Exception as e:
+        app.logger.exception(e,exc_info=False)
         return {"message":str(e),"status":500}
 
 
@@ -118,7 +122,8 @@ def validate_books(*args,**kwargs):
 @api.route('/updatebooks')
 class UpdatingbookApi(Resource):
     method_decorators = [authorize_user]
-    
+    @limiter.limit("20 per second")
+
     def put(self):
         try:
             book_id = request.args.get('book_id', type=int)
@@ -136,5 +141,6 @@ class UpdatingbookApi(Resource):
             db.session.commit()
             return {"message": "Book updated successfully", "status": 200}, 200
         except Exception as e:
+            app.logger.exception(e,exc_info=False)
             return {"message": str(e), "status": 500}, 500
 
